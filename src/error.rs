@@ -29,6 +29,9 @@ pub enum Error {
         #[from]
         source: rocket::Error,
     },
+
+    #[error("Requested game not found")]
+    NotFound,
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
@@ -37,6 +40,9 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
         // sentry::capture_error(&self);
         error!("{self}");
 
-        Status::InternalServerError.respond_to(req)
+        match self {
+            Self::NotFound => Status::NotFound.respond_to(req),
+            _ => Status::InternalServerError.respond_to(req),
+        }
     }
 }

@@ -138,7 +138,9 @@ async fn query_igdb(query: &str) -> Result<(), Error> {
     Ok(())
 }
 
-#[get("/games/<game>")]
-fn get_game(game: &str) {
-    todo!()
+#[get("/games/<game_id>")]
+async fn get_game(game_id: u32) -> Result<Json<GameJson>, Error> {
+    let db = get_database_connection().await;
+    let game = Game::find_by_id(game_id).one(db).await?.ok_or(Error::NotFound)?;
+    Ok(Json(game.to_json()))
 }
