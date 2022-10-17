@@ -32,6 +32,11 @@ pub enum Error {
 
     #[error("Requested game not found")]
     NotFound,
+
+    #[error("{message}")]
+    Custom {
+        message: String
+    }
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {

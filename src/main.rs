@@ -4,7 +4,7 @@ use log::{info, warn};
 use rocket::futures::future::try_join_all;
 use rocket::serde::json::Json;
 use rocket::tokio::runtime;
-use rocket::{routes, get};
+use rocket::{get, routes};
 use rocket::{Ignite, Rocket};
 use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter};
 use std::env;
@@ -87,7 +87,7 @@ async fn query_games(query: &str) -> Result<Json<Vec<GameJson>>, Error> {
         warn!("Query \"{query}\" returned a low number of results! Attempting to scrape IGDB for more matches");
         if let Some(query_model) = Query::find_by_id(query.to_string()).one(db).await? {
             if Utc::now() - query_model.queried_at < Duration::weeks(4) {
-                info!("Query is known to return a low number of results recently. Not requerying.");
+                info!("Query is known to return a low number of results recently (or is in the queue to be queried). Not requerying.");
                 should_requery = false;
             } else {
                 info!("Query has been attempted before, but not in the last 4 weeks. Retrying");
@@ -98,6 +98,13 @@ async fn query_games(query: &str) -> Result<Json<Vec<GameJson>>, Error> {
 
         if should_requery {
             let cloned_query = query.to_string();
+            if Query::find_by_id(query.to_string())
+                .one(db)
+                .await?
+                .is_none()
+            {
+                QueryActive::create(db, query.to_string()).await?;
+            }
             tokio::spawn(async move {
                 if let Err(err) = query_igdb(&cloned_query).await {
                     warn!("Failed to update game cache: {err:?}")
@@ -122,12 +129,12 @@ async fn query_igdb(query: &str) -> Result<(), Error> {
 
     info!("Recording information about query");
 
-    let query = match Query::find_by_id(query.to_string())
+    let query = Query::find_by_id(query.to_string())
         .one(db)
-        .await? {
-            Some(query) => query,
-            None => QueryActive::create(db, query.to_string()).await?,
-        };
+        .await?
+        .ok_or(Error::Custom {
+            message: "Query doesn't exist in database".to_string(),
+        })?;
 
     try_join_all(
         games
@@ -141,6 +148,9 @@ async fn query_igdb(query: &str) -> Result<(), Error> {
 #[get("/games/<game_id>")]
 async fn get_game(game_id: u32) -> Result<Json<GameJson>, Error> {
     let db = get_database_connection().await;
-    let game = Game::find_by_id(game_id).one(db).await?.ok_or(Error::NotFound)?;
+    let game = Game::find_by_id(game_id)
+        .one(db)
+        .await?
+        .ok_or(Error::NotFound)?;
     Ok(Json(game.to_json()))
 }
