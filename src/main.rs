@@ -6,7 +6,7 @@ use rocket::serde::json::Json;
 use rocket::tokio::runtime;
 use rocket::{get, routes};
 use rocket::{Ignite, Rocket};
-use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter, QuerySelect};
 use std::env;
 use tokio::sync::Mutex;
 
@@ -76,6 +76,7 @@ async fn query_games(query: &str) -> Result<Json<Vec<GameJson>>, Error> {
     info!("Querying internal database for {query}");
     let games = Game::find()
         .filter(GameColumn::Name.like(&format!("{query}%")))
+        .limit(10) // TODO: Could make this customisable
         .all(db)
         .await?
         .iter()
