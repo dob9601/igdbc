@@ -1,6 +1,7 @@
 use super::deserializers::*;
 use crate::models::QueryModel;
 use log::info;
+use schemars::JsonSchema;
 use sea_orm::{prelude::*, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -139,7 +140,7 @@ impl ActiveModel {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct GameJson {
     pub id: u32,
 
