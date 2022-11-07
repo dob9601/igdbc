@@ -10,19 +10,12 @@ use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter, QuerySelect};
 use std::env;
 use tokio::sync::Mutex;
 
-mod models;
+use igdbc::db::{get_database_connection, initialize_database, DATABASE_CONNECTION};
 
-mod igdb;
+use igdbc::igdb::IGDBClient;
 
-mod db;
-pub mod error;
-use db::DATABASE_CONNECTION;
-
-use crate::error::Error;
-use crate::models::{Game, GameActive, GameColumn, GameJson, Query, QueryActive};
-
-use self::db::{get_database_connection, initialize_database};
-use self::igdb::IGDBClient;
+use igdbc::error::Error;
+use igdbc::models::{Game, GameActive, GameColumn, GameJson, Query, QueryActive};
 
 // Could solve this by making the new() method sync? Only called once so might make sense
 // Would have to create a non-async client and then throw it away. Big brain me is already doing
