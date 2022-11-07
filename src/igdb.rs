@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::time::sleep;
 
 use crate::error::Error;
-use crate::models::GameJson;
+use crate::models::{IGDBGame, GameJson};
 
 lazy_static! {
     static ref TWITCH_CLIENT_ID: String = env::var("TWITCH_CLIENT_ID").unwrap();
@@ -69,7 +69,7 @@ impl IGDBClient {
 
 impl IGDBClient {
     pub async fn find_games(&mut self, game_name: &str) -> Result<Vec<GameJson>, Error> {
-        let games: Vec<GameJson> = self
+        let games: Vec<IGDBGame> = self
             .request(
                 "games",
                 format!(
@@ -95,7 +95,7 @@ fields
                 ),
             )
             .await?;
-        Ok(games)
+        Ok(games.into_iter().map(|game| game.into()).collect())
     }
     pub async fn request<T>(&mut self, endpoint: &str, body: String) -> Result<T, Error>
     where

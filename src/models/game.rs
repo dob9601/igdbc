@@ -88,7 +88,6 @@ impl ActiveModel {
         json: GameJson,
         query: &QueryModel,
     ) -> Result<Model, DbErr> {
-
         let model = Self {
             id: Set(json.id),
             name: Set(json.name),
@@ -141,7 +140,7 @@ impl ActiveModel {
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
-pub struct GameJson {
+pub struct IGDBGame {
     pub id: u32,
 
     pub name: String,
@@ -176,6 +175,61 @@ pub struct GameJson {
 
     #[serde(deserialize_with = "deserialize_platforms", default)]
     pub platforms: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct GameJson {
+    pub id: u32,
+
+    pub name: String,
+    pub summary: Option<String>,
+    pub aggregated_rating: Option<f32>,
+
+    pub themes: Option<Vec<String>>,
+
+    pub url: String,
+
+    //pub artwork: Vec<u8>, Requires a CDN, defer
+    //pub cover_art: Vec<u8>,
+    pub first_release_date: Option<DateTimeUtc>,
+
+    pub franchise: Option<String>,
+
+    pub genres: Option<Vec<String>>,
+
+    pub game_modes: Option<Vec<String>>,
+
+    pub supports_online_multiplayer: Option<bool>,
+
+    pub platforms: Option<Vec<String>>,
+}
+
+impl From<IGDBGame> for GameJson {
+    fn from(game: IGDBGame) -> Self {
+        Self {
+            id: game.id,
+
+            name: game.name,
+            summary: game.summary,
+            aggregated_rating: game.aggregated_rating,
+
+            themes: game.themes,
+
+            url: game.url,
+
+            first_release_date: game.first_release_date,
+
+            franchise: game.franchise,
+
+            genres: game.genres,
+
+            game_modes: game.game_modes,
+
+            supports_online_multiplayer: game.supports_online_multiplayer,
+
+            platforms: game.platforms,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
