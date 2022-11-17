@@ -177,7 +177,7 @@ pub struct IGDBGame {
     pub platforms: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 pub struct GameJson {
     pub id: u32,
 
