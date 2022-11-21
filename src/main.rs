@@ -15,7 +15,7 @@ use igdbc::db::{get_database_connection, initialize_database, DATABASE_CONNECTIO
 use igdbc::igdb::IGDBClient;
 
 use igdbc::error::Error;
-use igdbc::models::{Game, GameActive, GameColumn, Query, QueryActive, GameJson};
+use igdbc::models::{Game, GameActive, GameColumn, GameJson, Query, QueryActive};
 
 // Could solve this by making the new() method sync? Only called once so might make sense
 // Would have to create a non-async client and then throw it away. Big brain me is already doing

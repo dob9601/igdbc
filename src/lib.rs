@@ -1,4 +1,4 @@
-pub mod models;
+pub mod db;
 pub mod error;
 pub mod igdb;
-pub mod db;
+pub mod models;

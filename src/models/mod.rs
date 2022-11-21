@@ -1,7 +1,11 @@
 mod game;
-pub use game::{ActiveModel as GameActive, Column as GameColumn, Entity as Game, IGDBGame, GameJson};
+pub use game::{
+    ActiveModel as GameActive, Column as GameColumn, Entity as Game, GameJson, IGDBGame,
+};
 
 mod query;
-pub use query::{ActiveModel as QueryActive, Column as QueryColumn, Entity as Query, Model as QueryModel};
+pub use query::{
+    ActiveModel as QueryActive, Column as QueryColumn, Entity as Query, Model as QueryModel,
+};
 
 mod deserializers;

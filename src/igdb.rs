@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::time::sleep;
 
 use crate::error::Error;
-use crate::models::{IGDBGame, GameJson};
+use crate::models::{GameJson, IGDBGame};
 
 lazy_static! {
     static ref TWITCH_CLIENT_ID: String = env::var("TWITCH_CLIENT_ID").unwrap();

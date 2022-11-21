@@ -34,9 +34,7 @@ pub enum Error {
     NotFound,
 
     #[error("{message}")]
-    Custom {
-        message: String
-    }
+    Custom { message: String },
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
