@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use sea_orm::{prelude::*, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use shared::models::GameJson;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "games")]
@@ -174,33 +175,6 @@ pub struct IGDBGame {
     pub supports_online_multiplayer: Option<bool>,
 
     #[serde(deserialize_with = "deserialize_platforms", default)]
-    pub platforms: Option<Vec<String>>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
-pub struct GameJson {
-    pub id: u32,
-
-    pub name: String,
-    pub summary: Option<String>,
-    pub aggregated_rating: Option<f32>,
-
-    pub themes: Option<Vec<String>>,
-
-    pub url: String,
-
-    //pub artwork: Vec<u8>, Requires a CDN, defer
-    //pub cover_art: Vec<u8>,
-    pub first_release_date: Option<DateTimeUtc>,
-
-    pub franchise: Option<String>,
-
-    pub genres: Option<Vec<String>>,
-
-    pub game_modes: Option<Vec<String>>,
-
-    pub supports_online_multiplayer: Option<bool>,
-
     pub platforms: Option<Vec<String>>,
 }
 

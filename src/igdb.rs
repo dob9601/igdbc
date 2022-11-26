@@ -5,10 +5,11 @@ use lazy_static::lazy_static;
 use log::info;
 use reqwest::{blocking::Client as BlockingClient, Client, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use shared::models::GameJson;
 use tokio::time::sleep;
 
 use crate::error::Error;
-use crate::models::{GameJson, IGDBGame};
+use crate::models::IGDBGame;
 
 lazy_static! {
     static ref TWITCH_CLIENT_ID: String = env::var("TWITCH_CLIENT_ID").unwrap();
