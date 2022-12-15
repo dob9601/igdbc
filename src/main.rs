@@ -1,4 +1,5 @@
 use chrono::{Duration, Utc};
+use igdbc::CONFIG;
 use lazy_static::lazy_static;
 use log::{info, warn};
 use rocket::futures::future::try_join_all;
@@ -8,7 +9,6 @@ use rocket::{get, routes};
 use rocket::{Ignite, Rocket};
 use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter, QuerySelect};
 use shared::models::GameJson;
-use std::env;
 use tokio::sync::Mutex;
 
 use igdbc::db::{get_database_connection, initialize_database, DATABASE_CONNECTION};
@@ -22,7 +22,7 @@ use igdbc::models::{Game, GameActive, GameColumn, Query, QueryActive};
 // Would have to create a non-async client and then throw it away. Big brain me is already doing
 // this with 2 async clients accidentally
 lazy_static! {
-    static ref IGDB_CLIENT: Mutex<IGDBClient> = Mutex::new(IGDBClient::new().unwrap());
+    pub static ref IGDB_CLIENT: Mutex<IGDBClient> = Mutex::new(IGDBClient::new().unwrap());
 }
 
 fn main() -> Result<(), Error> {
@@ -31,18 +31,13 @@ fn main() -> Result<(), Error> {
         .init();
 
     lazy_static::initialize(&IGDB_CLIENT);
-
-    let database_url = env::var("IGDBC_DATABASE_URL")
-        .or(Err(
-            "Missing required environment variable 'IGDBC_DATABASE_URL'",
-        ))
-        .unwrap();
+    lazy_static::initialize(&CONFIG);
 
     let db = runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
-        .block_on(Database::connect(database_url))
+        .block_on(Database::connect(&CONFIG.database_url))
         .unwrap();
     DATABASE_CONNECTION.set(db).unwrap();
 

@@ -1,29 +1,17 @@
-use std::env;
-
 use chrono::{Duration, NaiveDateTime, Utc};
-use lazy_static::lazy_static;
 use log::info;
-use reqwest::{blocking::Client as BlockingClient, Client, Url};
+use reqwest::{blocking::Client as BlockingClient, Client};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::models::GameJson;
 use tokio::time::sleep;
 
+use crate::CONFIG;
 use crate::error::Error;
 use crate::models::IGDBGame;
-
-lazy_static! {
-    static ref TWITCH_CLIENT_ID: String = env::var("TWITCH_CLIENT_ID").unwrap();
-    static ref TWITCH_CLIENT_SECRET: String = env::var("TWITCH_CLIENT_SECRET").unwrap();
-    static ref TWITCH_OAUTH2_ENDPOINT: Url =
-        Url::parse(&env::var("TWITCH_OAUTH2_ENDPOINT").unwrap()).unwrap();
-    static ref IGDB_API_ENDPOINT: Url =
-        Url::parse(&env::var("IGDB_API_ENDPOINT").unwrap()).unwrap();
-}
 
 pub struct IGDBClient {
     client: Client,
     access_token: String,
-    // token_type: String,
     token_expiry: NaiveDateTime,
     next_request: NaiveDateTime,
 }
@@ -47,13 +35,13 @@ impl IGDBClient {
         let client = BlockingClient::new();
 
         let payload = TwitchAuthPayload {
-            client_id: TWITCH_CLIENT_ID.to_string(),
-            client_secret: TWITCH_CLIENT_SECRET.to_string(),
+            client_id: CONFIG.twitch.client_id.to_string(),
+            client_secret: CONFIG.twitch.client_secret.to_string(),
             grant_type: "client_credentials".to_string(),
         };
 
         let response: TwitchAuthResponse = client
-            .post(TWITCH_OAUTH2_ENDPOINT.as_str())
+            .post(&CONFIG.twitch.oauth2_endpoint)
             .form(&payload)
             .send()?
             .json()?;
@@ -119,13 +107,13 @@ fields
             self.refresh_access_token().await?;
         }
 
-        let target_url = IGDB_API_ENDPOINT.join(endpoint)?;
+        let target_url = CONFIG.igdb.api_endpoint.join(endpoint)?;
         let response = {
             self.client
                 .post(target_url)
                 .body(body)
                 .header("Authorization", format!("Bearer {}", self.access_token))
-                .header("Client-ID", TWITCH_CLIENT_ID.as_str())
+                .header("Client-ID", &CONFIG.twitch.client_id)
                 .send()
                 .await?
         };
