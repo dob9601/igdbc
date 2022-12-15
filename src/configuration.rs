@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub database_url: String,
+    pub allowed_origins: Vec<String>,
     pub igdb: IGDB,
     pub twitch: Twitch,
 }
@@ -26,7 +27,9 @@ pub fn get_config() -> Result<Config, config::ConfigError> {
         .add_source(
             config::Environment::with_prefix("IGDBC")
                 .try_parsing(true)
-                .separator("__"),
+                .separator("__")
+                .list_separator(",")
+                .with_list_parse_key("allowed_origins")
         )
         .build()?
         .try_deserialize()

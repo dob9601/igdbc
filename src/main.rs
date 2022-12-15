@@ -7,6 +7,7 @@ use rocket::serde::json::Json;
 use rocket::tokio::runtime;
 use rocket::{get, routes};
 use rocket::{Ignite, Rocket};
+use rocket_cors::{AllowedOrigins, CorsOptions};
 use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter, QuerySelect};
 use shared::models::GameJson;
 use tokio::sync::Mutex;
@@ -52,8 +53,12 @@ fn main() -> Result<(), Error> {
 async fn run() -> Result<Rocket<Ignite>, Error> {
     initialize_database().await?;
 
+    let cors = CorsOptions::default()
+        .allowed_origins(AllowedOrigins::some_exact(&CONFIG.allowed_origins));
+
     Ok(rocket::build()
         .mount("/", routes![query_games, get_game])
+        .attach(cors.to_cors().unwrap())
         .launch()
         .await?)
 }

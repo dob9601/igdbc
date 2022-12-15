@@ -12,6 +12,7 @@ lazy_static = "1.4.0"
 once_cell = "1.14.0"
 reqwest = { version = "0.11", features = [ "json", "blocking" ] }
 rocket = { version = "0.5.0-rc.2", features = [ "json" ] }
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors.git", rev = "54fae070"  }
 schemars = { version = "0.8.10", features = [ "chrono" ] }
 sea-orm = { version = "0.10.4", features = [ "sqlx-mysql", "runtime-tokio-rustls", "macros" ] }
 serde = "1.0.144"

@@ -17,6 +17,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY Rocket.toml .
 COPY --from=builder /build/igdbc/target/release/igdbc igdbc
 
 ENTRYPOINT [ "/app/igdbc", "run" ]
