@@ -167,6 +167,8 @@ pub struct IGDBGame {
 
     #[serde(deserialize_with = "deserialize_platforms", default)]
     pub platforms: Option<Vec<String>>,
+
+    pub parent_game: Option<u32>
 }
 
 impl From<IGDBGame> for GameJson {

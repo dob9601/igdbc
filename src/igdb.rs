@@ -5,9 +5,9 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::models::GameJson;
 use tokio::time::sleep;
 
-use crate::CONFIG;
 use crate::error::Error;
 use crate::models::IGDBGame;
+use crate::CONFIG;
 
 pub struct IGDBClient {
     client: Client,
@@ -79,12 +79,17 @@ fields
     genres.name,
     game_modes.name,
     multiplayer_modes.onlinecoop,
-    platforms.name;
+    platforms.name
+    parent_game;
 "
                 ),
             )
             .await?;
-        Ok(games.into_iter().map(|game| game.into()).collect())
+        Ok(games
+            .into_iter()
+            .filter(|game| game.parent_game.is_none())
+            .map(|game| game.into())
+            .collect())
     }
     pub async fn request<T>(&mut self, endpoint: &str, body: String) -> Result<T, Error>
     where
