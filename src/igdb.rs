@@ -79,16 +79,14 @@ fields
     genres.name,
     game_modes.name,
     multiplayer_modes.onlinecoop,
-    platforms.name,
-    parent_game,
-    version_parent;
+    platforms.name;
+where category = 0 & version_parent = null & parent_game = null;
 "
                 ),
             )
             .await?;
         Ok(games
             .into_iter()
-            .filter(|game| game.parent_game.is_none() && game.version_parent.is_none())
             .map(|game| game.into())
             .collect())
     }
