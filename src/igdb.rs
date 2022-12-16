@@ -80,14 +80,15 @@ fields
     game_modes.name,
     multiplayer_modes.onlinecoop,
     platforms.name,
-    parent_game;
+    parent_game,
+    version_parent;
 "
                 ),
             )
             .await?;
         Ok(games
             .into_iter()
-            .filter(|game| game.parent_game.is_none())
+            .filter(|game| game.parent_game.is_none() && game.version_parent.is_none())
             .map(|game| game.into())
             .collect())
     }
