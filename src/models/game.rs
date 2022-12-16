@@ -12,29 +12,18 @@ use shared::models::GameJson;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: u32,
-
     pub query_id: String,
-
     pub name: String,
-
     #[sea_orm(column_type = "Text", nullable)]
     pub summary: Option<String>,
     pub aggregated_rating: Option<f32>,
-
     pub themes: Option<Json>,
-
     pub url: String,
-
     pub first_release_date: Option<DateTimeUtc>,
-
     pub franchise: Option<String>,
-
     pub genres: Option<Json>,
-
     pub game_modes: Option<Json>,
-
     pub supports_online_multiplayer: Option<bool>,
-
     pub platforms: Option<Json>,
 }
 
