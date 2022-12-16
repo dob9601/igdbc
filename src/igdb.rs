@@ -79,7 +79,7 @@ fields
     genres.name,
     game_modes.name,
     multiplayer_modes.onlinecoop,
-    platforms.name
+    platforms.name,
     parent_game;
 "
                 ),
