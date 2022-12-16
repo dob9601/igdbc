@@ -16,6 +16,8 @@ pub struct Model {
     pub query_id: String,
 
     pub name: String,
+
+    #[sea_orm(column_type = "Text", nullable)]
     pub summary: Option<String>,
     pub aggregated_rating: Option<f32>,
 

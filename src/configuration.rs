@@ -18,7 +18,7 @@ pub struct IGDB {
 pub struct Twitch {
     pub client_id: String,
     pub client_secret: String,
-    pub oauth2_endpoint: String,
+    pub oauth2_endpoint: Url,
 }
 
 pub fn get_config() -> Result<Config, config::ConfigError> {

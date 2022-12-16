@@ -41,7 +41,7 @@ impl IGDBClient {
         };
 
         let response: TwitchAuthResponse = client
-            .post(&CONFIG.twitch.oauth2_endpoint)
+            .post(CONFIG.twitch.oauth2_endpoint.clone())
             .form(&payload)
             .send()?
             .json()?;
