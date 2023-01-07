@@ -9,7 +9,7 @@ where
     let unix_timestamp = <Option<u32>>::deserialize(deserializer)?;
 
     Ok(unix_timestamp.map(|unix_timestamp| {
-        let naive = chrono::NaiveDateTime::from_timestamp(unix_timestamp.into(), 0);
+        let naive = chrono::NaiveDateTime::from_timestamp_opt(unix_timestamp.into(), 0).unwrap();
         DateTimeUtc::from_utc(naive, Utc)
     }))
 }
