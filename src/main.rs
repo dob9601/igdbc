@@ -31,7 +31,8 @@ fn main() -> Result<(), Error> {
         .filter_level(log::LevelFilter::Info)
         .init();
 
-    lazy_static::initialize(&IGDB_CLIENT);
+    // Don't initialize igdb client immediately so can operate without a twitch connection in some situations
+    // lazy_static::initialize(&IGDB_CLIENT);
     lazy_static::initialize(&CONFIG);
 
     let db = runtime::Builder::new_multi_thread()
@@ -53,8 +54,8 @@ fn main() -> Result<(), Error> {
 async fn run() -> Result<Rocket<Ignite>, Error> {
     initialize_database().await?;
 
-    let cors = CorsOptions::default()
-        .allowed_origins(AllowedOrigins::some_exact(&CONFIG.allowed_origins));
+    let cors =
+        CorsOptions::default().allowed_origins(AllowedOrigins::some_exact(&CONFIG.allowed_origins));
 
     Ok(rocket::build()
         .mount("/", routes![query_games, get_game])
