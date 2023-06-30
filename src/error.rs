@@ -30,8 +30,8 @@ pub enum Error {
         source: rocket::Error,
     },
 
-    #[error("Requested game not found")]
-    NotFound,
+    #[error("Could not find game with id {0}")]
+    NotFound(u32),
 
     #[error("{message}")]
     Custom { message: String },
@@ -44,7 +44,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
         error!("{self}");
 
         match self {
-            Self::NotFound => Status::NotFound.respond_to(req),
+            Self::NotFound(_) => Status::NotFound.respond_to(req),
             _ => Status::InternalServerError.respond_to(req),
         }
     }

@@ -147,7 +147,7 @@ async fn get_game(game_id: u32) -> Result<Json<GameJson>, Error> {
     let game = Game::find_by_id(game_id)
         .one(db)
         .await?
-        .ok_or(Error::NotFound)?;
+        .ok_or(Error::NotFound(game_id))?;
 
     Ok(Json(game.to_json()))
 }
