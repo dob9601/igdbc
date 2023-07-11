@@ -1,11 +1,11 @@
 use super::deserializers::*;
 use crate::models::QueryModel;
-use log::info;
 use schemars::JsonSchema;
-use sea_orm::{prelude::*, Set};
+use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use shared::models::GameJson;
+use tracing::info;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "games")]
@@ -27,14 +27,27 @@ pub struct Model {
     pub platforms: Option<Json>,
 }
 
+impl Entity {
+    pub async fn find_by_query<C>(db: &C, query: &str) -> Result<Vec<Model>, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        Self::find()
+            .filter(Column::Name.like(&format!("{query}%")))
+            .limit(10)
+            .all(db)
+            .await
+    }
+}
+
 impl Model {
-    pub fn to_json(&self) -> GameJson {
+    pub fn to_json(self) -> GameJson {
         GameJson {
             id: self.id,
-            name: self.name.clone(),
-            summary: self.summary.clone(),
+            name: self.name,
+            summary: self.summary,
             aggregated_rating: self.aggregated_rating,
-            themes: self.themes.clone().map(|themes| {
+            themes: self.themes.map(|themes| {
                 themes
                     .as_array()
                     .unwrap()
@@ -42,18 +55,18 @@ impl Model {
                     .map(|value| value.as_str().unwrap().to_string())
                     .collect()
             }),
-            url: self.url.clone(),
+            url: self.url,
             first_release_date: self.first_release_date,
-            franchise: self.franchise.clone(),
-            genres: self.genres.clone().map(|themes| {
+            franchise: self.franchise,
+            genres: self.genres.map(|themes| {
                 themes
                     .as_array()
                     .unwrap()
-                    .iter()
+                    .into_iter()
                     .map(|value| value.as_str().unwrap().to_string())
                     .collect()
             }),
-            game_modes: self.game_modes.clone().map(|game_mode| {
+            game_modes: self.game_modes.map(|game_mode| {
                 game_mode
                     .as_array()
                     .unwrap()
@@ -62,7 +75,7 @@ impl Model {
                     .collect()
             }),
             supports_online_multiplayer: self.supports_online_multiplayer,
-            platforms: self.platforms.clone().map(|platform| {
+            platforms: self.platforms.map(|platform| {
                 platform
                     .as_array()
                     .unwrap()
@@ -75,11 +88,10 @@ impl Model {
 }
 
 impl ActiveModel {
-    pub async fn create(
-        db: &DatabaseConnection,
-        json: GameJson,
-        query: &QueryModel,
-    ) -> Result<Model, DbErr> {
+    pub async fn create<C>(db: &C, json: GameJson, query: &QueryModel) -> Result<Model, DbErr>
+    where
+        C: ConnectionTrait,
+    {
         let model = Self {
             id: Set(json.id),
             name: Set(json.name),
@@ -99,11 +111,14 @@ impl ActiveModel {
         Ok(model)
     }
 
-    pub async fn create_or_update(
-        db: &DatabaseConnection,
+    pub async fn create_or_update<C>(
+        db: &C,
         json: GameJson,
         query: &QueryModel,
-    ) -> Result<(), DbErr> {
+    ) -> Result<(), DbErr>
+    where
+        C: ConnectionTrait,
+    {
         info!("Creating/Updating game '{}'", json.name);
         let maybe_model = Entity::find_by_id(json.id).one(db).await?;
 

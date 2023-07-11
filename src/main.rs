@@ -1,153 +1,36 @@
-use chrono::{Duration, Utc};
+use std::net::SocketAddr;
+use std::str::FromStr;
+
+use axum::Server;
 use igdbc::CONFIG;
-use lazy_static::lazy_static;
-use log::{info, warn};
-use rocket::futures::future::try_join_all;
-use rocket::serde::json::Json;
-use rocket::tokio::runtime;
-use rocket::{get, routes};
-use rocket::{Ignite, Rocket};
-use rocket_cors::{AllowedOrigins, CorsOptions};
-use sea_orm::{ColumnTrait, Database, EntityTrait, QueryFilter, QuerySelect};
-use shared::models::GameJson;
-use tokio::sync::Mutex;
 
-use igdbc::db::{get_database_connection, initialize_database, DATABASE_CONNECTION};
+use igdbc::error::IgdbcError;
+use tokio::runtime;
+use tracing::Level;
 
-use igdbc::igdb::IGDBClient;
-
-use igdbc::error::Error;
-use igdbc::models::{Game, GameActive, GameColumn, Query, QueryActive};
-
-// Could solve this by making the new() method sync? Only called once so might make sense
-// Would have to create a non-async client and then throw it away. Big brain me is already doing
-// this with 2 async clients accidentally
-lazy_static! {
-    pub static ref IGDB_CLIENT: Mutex<IGDBClient> = Mutex::new(IGDBClient::new().unwrap());
-}
-
-fn main() -> Result<(), Error> {
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
+fn main() -> Result<(), IgdbcError> {
+    tracing_subscriber::fmt()
+        .with_max_level(Level::INFO)
+        .with_env_filter("sqlx=off,bot=trace,axum=trace,hyper=warn,tower_http=trace,sea_orm=info,poise=trace,serenity=warn")
+        .with_line_number(true)
         .init();
 
     // Don't initialize igdb client immediately so can operate without a twitch connection in some situations
-    // lazy_static::initialize(&IGDB_CLIENT);
     lazy_static::initialize(&CONFIG);
-
-    let db = runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(Database::connect(&CONFIG.database_url))
-        .unwrap();
-    DATABASE_CONNECTION.set(db).unwrap();
+    lazy_static::initialize(&igdbc::IGDB_CLIENT);
 
     runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(run())
-        .map(|_| ())
 }
 
-async fn run() -> Result<Rocket<Ignite>, Error> {
-    initialize_database().await?;
+async fn run() -> Result<(), IgdbcError> {
+    let app = igdbc::routes::app(&CONFIG.database_url).await?;
+    let addr = SocketAddr::from_str(&CONFIG.address).unwrap();
 
-    let cors =
-        CorsOptions::default().allowed_origins(AllowedOrigins::some_exact(&CONFIG.allowed_origins));
+    Server::bind(&addr).serve(app.into_make_service()).await?;
 
-    Ok(rocket::build()
-        .mount("/", routes![query_games, get_game])
-        .attach(cors.to_cors().unwrap())
-        .launch()
-        .await?)
-}
-
-#[get("/games?<query>")]
-async fn query_games(query: &str) -> Result<Json<Vec<GameJson>>, Error> {
-    let db = get_database_connection().await;
-
-    info!("Querying internal database for {query}");
-    let games = Game::find()
-        .filter(GameColumn::Name.like(&format!("{query}%")))
-        .limit(10) // TODO: Could make this customisable
-        .all(db)
-        .await?
-        .iter()
-        .map(|game| game.to_json())
-        .collect::<Vec<GameJson>>();
-
-    if games.len() < 10 {
-        let mut should_requery = true;
-        warn!("Query \"{query}\" returned a low number of results! Attempting to scrape IGDB for more matches");
-        if let Some(query_model) = Query::find_by_id(query.to_string()).one(db).await? {
-            if Utc::now() - query_model.queried_at < Duration::weeks(4) {
-                info!("Query is known to return a low number of results recently (or is in the queue to be queried). Not requerying.");
-                should_requery = false;
-            } else {
-                info!("Query has been attempted before, but not in the last 4 weeks. Retrying");
-            }
-        } else {
-            info!("Query has not been attempted before, proceeding");
-        }
-
-        if should_requery {
-            let cloned_query = query.to_string();
-            if Query::find_by_id(query.to_string())
-                .one(db)
-                .await?
-                .is_none()
-            {
-                QueryActive::create(db, query.to_string()).await?;
-            }
-            tokio::spawn(async move {
-                if let Err(err) = query_igdb(&cloned_query).await {
-                    warn!("Failed to update game cache: {err:?}")
-                }
-            });
-        }
-    }
-    Ok(Json(games))
-}
-
-async fn query_igdb(query: &str) -> Result<(), Error> {
-    info!("Refreshing game cache for query {query}");
-    let db = get_database_connection().await;
-
-    let games;
-    {
-        let mut client = IGDB_CLIENT.lock().await;
-        games = client.find_games(query).await?;
-    }
-
-    info!("IGDB returned {} games!", games.len());
-
-    info!("Recording information about query");
-
-    let query = Query::find_by_id(query.to_string())
-        .one(db)
-        .await?
-        .ok_or(Error::Custom {
-            message: "Query doesn't exist in database".to_string(),
-        })?;
-
-    try_join_all(
-        games
-            .iter()
-            .map(|game| GameActive::create_or_update(db, game.clone(), &query)),
-    )
-    .await?;
     Ok(())
-}
-
-#[get("/games/<game_id>")]
-async fn get_game(game_id: u32) -> Result<Json<GameJson>, Error> {
-    let db = get_database_connection().await;
-    let game = Game::find_by_id(game_id)
-        .one(db)
-        .await?
-        .ok_or(Error::NotFound(game_id))?;
-
-    Ok(Json(game.to_json()))
 }

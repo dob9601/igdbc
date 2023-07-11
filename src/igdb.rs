@@ -1,11 +1,11 @@
 use chrono::{Duration, NaiveDateTime, Utc};
-use log::info;
 use reqwest::{blocking::Client as BlockingClient, Client};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use shared::models::GameJson;
 use tokio::time::sleep;
+use tracing::info;
 
-use crate::error::Error;
+use crate::error::IgdbcError;
 use crate::models::IGDBGame;
 use crate::CONFIG;
 
@@ -31,7 +31,7 @@ struct TwitchAuthResponse {
 }
 
 impl IGDBClient {
-    pub fn new() -> Result<Self, Error> {
+    pub fn new() -> Result<Self, IgdbcError> {
         let client = BlockingClient::new();
 
         let payload = TwitchAuthPayload {
@@ -57,7 +57,7 @@ impl IGDBClient {
 }
 
 impl IGDBClient {
-    pub async fn find_games(&mut self, game_name: &str) -> Result<Vec<GameJson>, Error> {
+    pub async fn find_games(&mut self, game_name: &str) -> Result<Vec<GameJson>, IgdbcError> {
         let games: Vec<IGDBGame> = self
             .request(
                 "games",
@@ -85,12 +85,9 @@ where category = 0 & version_parent = null & parent_game = null;
                 ),
             )
             .await?;
-        Ok(games
-            .into_iter()
-            .map(|game| game.into())
-            .collect())
+        Ok(games.into_iter().map(|game| game.into()).collect())
     }
-    pub async fn request<T>(&mut self, endpoint: &str, body: String) -> Result<T, Error>
+    pub async fn request<T>(&mut self, endpoint: &str, body: String) -> Result<T, IgdbcError>
     where
         Self: Sync + Send,
         T: DeserializeOwned,
@@ -132,12 +129,12 @@ where category = 0 & version_parent = null & parent_game = null;
         self.next_request = Utc::now().naive_utc() + Duration::milliseconds(250);
 
         let mut deserializer = serde_json::Deserializer::from_str(&response_body);
-        serde_path_to_error::deserialize(&mut deserializer).map_err(|err| Error::SerdeJson {
+        serde_path_to_error::deserialize(&mut deserializer).map_err(|err| IgdbcError::SerdeJson {
             path: err.path().to_string(),
         })
     }
 
-    async fn refresh_access_token(&mut self) -> Result<(), Error> {
+    async fn refresh_access_token(&mut self) -> Result<(), IgdbcError> {
         *self = IGDBClient::new()?;
         Ok(())
     }

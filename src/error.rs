@@ -1,51 +1,60 @@
-use log::error;
-use rocket::http::Status;
-use rocket::response::Responder;
-use rocket::{response, Request};
+use axum::response::{IntoResponse, Response};
+use reqwest::StatusCode;
 use thiserror::Error;
+use tracing::{error, trace};
+
+use crate::routes::games::GameFetchError;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Error, Debug)]
-pub enum Error {
-    #[error("HTTP Error {source:?}")]
-    Reqwest {
-        #[from]
-        source: reqwest::Error,
-    },
-    #[error("URL Parse Error {source:?}")]
-    ParseError {
-        #[from]
-        source: url::ParseError,
-    },
+pub enum IgdbcError {
+    #[error("HTTP Error {0:?}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("URL Parse Error {0:?}")]
+    ParseError(#[from] url::ParseError),
     #[error("Serde Json Error {path:?}")]
     SerdeJson { path: String },
-    #[error("SeaOrm Error {source:?}")]
-    SeaOrm {
-        #[from]
-        source: sea_orm::DbErr,
-    },
-    #[error("Rocket Error {source:?}")]
-    Rocket {
-        #[from]
-        source: rocket::Error,
-    },
+    #[error("SeaOrm Error {0:?}")]
+    SeaOrm(#[from] sea_orm::DbErr),
+    #[error("Axum Error {0:?}")]
+    Axum(#[from] axum::Error),
+
+    #[error("Axum Error {0:?}")]
+    Hyper(#[from] hyper::Error),
 
     #[error("Could not find game with id {0}")]
-    NotFound(u32),
+    Status(StatusCode),
 
-    #[error("{message}")]
-    Custom { message: String },
+    #[error("Error fetching games: {0}")]
+    GameFetch(GameFetchError),
+
+    #[error("{0}")]
+    Custom(String),
 }
 
-impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
-    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'o> {
-        // log `self` to your favored error tracker, e.g.
-        // sentry::capture_error(&self);
-        error!("{self}");
+impl From<StatusCode> for IgdbcError {
+    fn from(code: StatusCode) -> Self {
+        Self::Status(code)
+    }
+}
+
+impl From<GameFetchError> for IgdbcError {
+    fn from(value: GameFetchError) -> Self {
+        Self::GameFetch(value)
+    }
+}
+
+impl IntoResponse for IgdbcError {
+    fn into_response(self) -> Response {
+        trace!("Route returned error: {self}");
 
         match self {
-            Self::NotFound(_) => Status::NotFound.respond_to(req),
-            _ => Status::InternalServerError.respond_to(req),
+            Self::Status(code) => code.into_response(),
+            Self::GameFetch(error) => error.into_response(),
+            _ => {
+                error!("Route returned unhandled error: {self}");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         }
     }
 }
