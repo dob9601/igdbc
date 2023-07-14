@@ -25,6 +25,9 @@ pub struct Model {
     pub game_modes: Option<Json>,
     pub supports_online_multiplayer: Option<bool>,
     pub platforms: Option<Json>,
+
+    pub cover_art_url: Option<String>,
+    pub artwork_url: Option<String>,
 }
 
 impl Entity {
@@ -83,6 +86,8 @@ impl Model {
                     .map(|value| value.as_str().unwrap().to_string())
                     .collect()
             }),
+            artwork_url: self.artwork_url,
+            cover_art_url: self.cover_art_url,
         }
     }
 }
@@ -106,6 +111,8 @@ impl ActiveModel {
             supports_online_multiplayer: Set(json.supports_online_multiplayer),
             platforms: Set(json.platforms.map(|platforms| json!(platforms))),
             query_id: Set(query.query.clone()),
+            cover_art_url: Set(json.cover_art_url),
+            artwork_url: Set(json.artwork_url),
         };
         let model = model.insert(db).await?;
         Ok(model)
@@ -159,8 +166,12 @@ pub struct IGDBGame {
 
     pub url: String,
 
-    //pub artwork: Vec<u8>, Requires a CDN, defer
-    //pub cover_art: Vec<u8>,
+    #[serde(deserialize_with = "deserialize_image", default)]
+    pub artwork_url: Option<String>,
+
+    #[serde(deserialize_with = "deserialize_image", default)]
+    pub cover_art_url: Option<String>,
+
     #[serde(deserialize_with = "deserialize_unix_timestamp", default)]
     pub first_release_date: Option<DateTimeUtc>,
 
@@ -208,6 +219,12 @@ impl From<IGDBGame> for GameJson {
             supports_online_multiplayer: game.supports_online_multiplayer,
 
             platforms: game.platforms,
+            artwork_url: game
+                .artwork_url
+                .map(|url| url.replace("t_thumb", "t_1080p")),
+            cover_art_url: game
+                .cover_art_url
+                .map(|url| url.replace("t_thumb", "t_1080p")),
         }
     }
 }

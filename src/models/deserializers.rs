@@ -2,6 +2,20 @@ use chrono::Utc;
 use sea_orm::prelude::DateTimeUtc;
 use serde::{Deserialize, Deserializer, Serialize};
 
+pub fn deserialize_image<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Serialize, Deserialize)]
+    struct ImageData {
+        url: String,
+    }
+
+    let url = <Option<ImageData>>::deserialize(deserializer)?.map(|data| data.url);
+
+    Ok(url)
+}
+
 pub fn deserialize_unix_timestamp<'de, D>(deserializer: D) -> Result<Option<DateTimeUtc>, D::Error>
 where
     D: Deserializer<'de>,
