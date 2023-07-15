@@ -12,7 +12,7 @@ use tracing::info;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: u32,
-    pub query_id: String,
+    pub query_id: Option<String>,
     pub name: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub summary: Option<String>,
@@ -110,7 +110,7 @@ impl ActiveModel {
             game_modes: Set(json.game_modes.map(|game_modes| json!(game_modes))),
             supports_online_multiplayer: Set(json.supports_online_multiplayer),
             platforms: Set(json.platforms.map(|platforms| json!(platforms))),
-            query_id: Set(query.query.clone()),
+            query_id: Set(Some(query.query.clone())),
             cover_art_url: Set(json.cover_art_url),
             artwork_url: Set(json.artwork_url),
         };

@@ -29,7 +29,7 @@ pub struct AppState {
     db: DatabaseConnection,
 }
 
-pub async fn query_igdb<C>(db: &C, query: &str) -> Result<(), IgdbcError>
+pub async fn search_igdb<C>(db: &C, query: &str) -> Result<(), IgdbcError>
 where
     C: ConnectionTrait,
 {

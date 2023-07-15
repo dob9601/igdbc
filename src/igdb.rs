@@ -30,6 +30,24 @@ struct TwitchAuthResponse {
     // token_type: String,
 }
 
+const FIELDS: &str = "\
+fields
+    id,
+    name,
+    summary,
+    aggregated_rating,
+    themes.name,
+    url,
+    artworks.url,
+    cover.url,
+    first_release_date, 
+    franchise.name,
+    genres.name,
+    game_modes.name,
+    multiplayer_modes.onlinecoop,
+    platforms.name;
+";
+
 impl IGDBClient {
     pub fn new() -> Result<Self, IgdbcError> {
         let client = BlockingClient::new();
@@ -57,6 +75,19 @@ impl IGDBClient {
 }
 
 impl IGDBClient {
+    pub async fn find_game_by_id(&mut self, id: i32) -> Result<GameJson, IgdbcError> {
+        self.request(
+            "games",
+            format!(
+                "\
+                {FIELDS}\n\
+                where id = {id};
+        "
+            ),
+        )
+        .await
+    }
+
     pub async fn find_games(&mut self, game_name: &str) -> Result<Vec<GameJson>, IgdbcError> {
         let games: Vec<IGDBGame> = self
             .request(
@@ -65,21 +96,7 @@ impl IGDBClient {
                     "\
 search \"{game_name}\";
 limit 500;
-fields
-    id,
-    name,
-    summary,
-    aggregated_rating,
-    themes.name,
-    url,
-    artworks.url,
-    cover.url,
-    first_release_date, 
-    franchise.name,
-    genres.name,
-    game_modes.name,
-    multiplayer_modes.onlinecoop,
-    platforms.name;
+{FIELDS}
 where category = 0 & version_parent = null & parent_game = null;
 "
                 ),

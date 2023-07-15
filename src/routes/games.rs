@@ -13,7 +13,7 @@ use tracing::{info, warn};
 
 use crate::error::IgdbcError;
 use crate::models::{self, Game, QueryActive};
-use crate::{query_igdb, AppState};
+use crate::{search_igdb, AppState};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -22,21 +22,41 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(Error, Debug, Clone)]
+#[repr(u8)]
 pub enum GameFetchError {
     #[error("Populating game cache for query, please try again later.")]
     RepopulatingCache = 0,
 
     #[error("The query you provided is too long")]
     QueryTooLong = 1,
+
+    #[error("Could not find a game with ID '{0}'")]
+    IdNotFound(u32) = 2,
+}
+
+impl GameFetchError {
+    pub fn code(&self) -> u8 {
+        match self {
+            GameFetchError::RepopulatingCache => 0,
+            GameFetchError::QueryTooLong => 1,
+            GameFetchError::IdNotFound(_) => 2,
+        }
+    }
 }
 
 impl IntoResponse for GameFetchError {
     fn into_response(self) -> Response {
-        Json(json!({
+        let status_code = match &self {
+            GameFetchError::IdNotFound(_) => StatusCode::NOT_FOUND,
+            _ => StatusCode::BAD_REQUEST,
+        };
+
+        let json = Json(json!({
             "message": self.to_string(),
-            "code": self as usize
-        }))
-        .into_response()
+            "code": self.code()
+        }));
+
+        (status_code, json).into_response()
     }
 }
 
@@ -90,7 +110,7 @@ async fn query_games(
                 QueryActive::create(&state.db, query.to_string()).await?;
             }
 
-            query_igdb(&state.db, &cloned_query).await?;
+            search_igdb(&state.db, &cloned_query).await?;
 
             return Ok(Json(
                 Game::find_by_query(&state.db, &query)
@@ -111,7 +131,7 @@ async fn get_game(
     let game = Game::find_by_id(id)
         .one(&state.db)
         .await?
-        .ok_or(StatusCode::NOT_FOUND)?;
+        .ok_or_else(|| GameFetchError::IdNotFound(id))?;
 
     Ok(Json(game.to_json()))
 }
