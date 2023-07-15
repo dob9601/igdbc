@@ -5,7 +5,7 @@ use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use shared::models::GameJson;
-use tracing::info;
+use tracing::{info, trace};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "games")]
@@ -126,11 +126,11 @@ impl ActiveModel {
     where
         C: ConnectionTrait,
     {
-        info!("Creating/Updating game '{}'", json.name);
+        trace!("Creating/Updating game '{}'", json.name);
         let maybe_model = Entity::find_by_id(json.id).one(db).await?;
 
         if let Some(model) = maybe_model {
-            info!("Game '{}' already exists - updating", json.name);
+            trace!("Game '{}' already exists - updating", json.name);
             let mut active_model: ActiveModel = model.into();
             active_model.id = Set(json.id);
             active_model.name = Set(json.name);
@@ -146,7 +146,7 @@ impl ActiveModel {
             active_model.platforms = Set(json.platforms.map(|platforms| json!(platforms)));
             active_model.save(db).await?;
         } else {
-            info!("Game '{}' does not exist - creating", json.name);
+            trace!("Game '{}' does not exist - creating", json.name);
             Self::create(db, json, query).await?;
         }
         Ok(())
