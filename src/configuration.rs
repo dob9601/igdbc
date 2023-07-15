@@ -8,20 +8,11 @@ pub struct Config {
     pub allowed_origins: Vec<String>,
     pub igdb: IGDB,
     pub twitch: Twitch,
-    pub cloudinary: Cloudinary,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct IGDB {
     pub api_endpoint: Url,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Cloudinary {
-    pub api_endpoint: Url,
-    pub cloud_name: String,
-    pub api_key: String,
-    pub api_secret: String,
 }
 
 #[derive(Serialize, Deserialize)]
