@@ -166,11 +166,11 @@ pub struct IGDBGame {
 
     pub url: String,
 
-    #[serde(deserialize_with = "deserialize_image", default)]
-    pub artwork_url: Option<String>,
+    #[serde(deserialize_with = "deserialize_artworks", default)]
+    pub artworks: Option<String>,
 
-    #[serde(deserialize_with = "deserialize_image", default)]
-    pub cover_art_url: Option<String>,
+    #[serde(deserialize_with = "deserialize_cover", default)]
+    pub cover: Option<String>,
 
     #[serde(deserialize_with = "deserialize_unix_timestamp", default)]
     pub first_release_date: Option<DateTimeUtc>,
@@ -220,11 +220,11 @@ impl From<IGDBGame> for GameJson {
 
             platforms: game.platforms,
             artwork_url: game
-                .artwork_url
-                .map(|url| url.replace("t_thumb", "t_1080p")),
+                .artworks
+                .map(|url| format!("https:{}", url.replace("t_thumb", "t_1080p"))),
             cover_art_url: game
-                .cover_art_url
-                .map(|url| url.replace("t_thumb", "t_1080p")),
+                .cover
+                .map(|url| format!("https:{}", url.replace("t_thumb", "t_1080p"))),
         }
     }
 }

@@ -2,7 +2,7 @@ use chrono::Utc;
 use sea_orm::prelude::DateTimeUtc;
 use serde::{Deserialize, Deserializer, Serialize};
 
-pub fn deserialize_image<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+pub fn deserialize_artworks<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -11,7 +11,23 @@ where
         url: String,
     }
 
-    let url = <Option<ImageData>>::deserialize(deserializer)?.map(|data| data.url);
+    let url = <Vec<ImageData>>::deserialize(deserializer)?
+        .first()
+        .map(|data| data.url.clone());
+
+    Ok(url)
+}
+
+pub fn deserialize_cover<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Serialize, Deserialize)]
+    struct ImageData {
+        url: Option<String>,
+    }
+
+    let url = <ImageData>::deserialize(deserializer)?.url;
 
     Ok(url)
 }

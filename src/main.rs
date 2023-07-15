@@ -11,7 +11,7 @@ use tracing::Level;
 fn main() -> Result<(), IgdbcError> {
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
-        .with_env_filter("sqlx=off,bot=trace,axum=trace,hyper=warn,tower_http=trace,sea_orm=info,poise=trace,serenity=warn")
+        .with_env_filter("sqlx=off,igdbc=trace,axum=trace,hyper=warn,tower_http=trace,sea_orm=info")
         .with_line_number(true)
         .init();
 
