@@ -71,8 +71,8 @@ async fn query_games(
 ) -> Result<Json<Vec<GameJson>>, IgdbcError> {
     let query = params.query;
 
-    // game name length for 2018 ranged up to around 28. Add a bit of padding.
-    if query.len() > 30 {
+    // game name length for 2018 ranged up to around 28. Add a bit of padding by doubling
+    if query.len() > 60 {
         return Err(GameFetchError::QueryTooLong.into());
     }
 
