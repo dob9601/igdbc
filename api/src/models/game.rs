@@ -1,11 +1,12 @@
 use super::deserializers::*;
 use crate::models::QueryModel;
+use crate::views::GameJson;
+use chrono::NaiveDateTime;
 use schemars::JsonSchema;
 use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use shared::models::GameJson;
-use tracing::{info, trace};
+use tracing::trace;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "games")]
@@ -19,7 +20,7 @@ pub struct Model {
     pub aggregated_rating: Option<f32>,
     pub themes: Option<Json>,
     pub url: String,
-    pub first_release_date: Option<DateTimeUtc>,
+    pub first_release_date: Option<NaiveDateTime>,
     pub franchise: Option<String>,
     pub genres: Option<Json>,
     pub game_modes: Option<Json>,
@@ -173,7 +174,7 @@ pub struct IGDBGame {
     pub cover: Option<String>,
 
     #[serde(deserialize_with = "deserialize_unix_timestamp", default)]
-    pub first_release_date: Option<DateTimeUtc>,
+    pub first_release_date: Option<NaiveDateTime>,
 
     #[serde(deserialize_with = "deserialize_franchise", default)]
     pub franchise: Option<String>,

@@ -1,4 +1,3 @@
-use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -6,20 +5,13 @@ pub struct Config {
     pub database_url: String,
     pub address: String,
     pub allowed_origins: Vec<String>,
-    pub igdb: IGDB,
     pub twitch: Twitch,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct IGDB {
-    pub api_endpoint: Url,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Twitch {
     pub client_id: String,
     pub client_secret: String,
-    pub oauth2_endpoint: Url,
 }
 
 pub fn get_config() -> Result<Config, config::ConfigError> {

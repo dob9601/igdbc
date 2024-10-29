@@ -7,12 +7,14 @@ use reqwest::StatusCode;
 use sea_orm::EntityTrait;
 use serde::Deserialize;
 use serde_json::json;
-use shared::models::GameJson;
 use thiserror::Error;
 use tracing::{info, warn};
 
 use crate::error::IgdbcError;
+use crate::igdb::apicalypse::ApicalypseQuery;
+use crate::igdb::IGDB_CLIENT;
 use crate::models::{self, Game, QueryActive};
+use crate::views::GameJson;
 use crate::{search_igdb, AppState};
 
 pub fn router() -> Router<AppState> {

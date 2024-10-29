@@ -1,5 +1,4 @@
-use chrono::Utc;
-use sea_orm::prelude::DateTimeUtc;
+use chrono::{DateTime, NaiveDateTime};
 use serde::{Deserialize, Deserializer, Serialize};
 
 pub fn deserialize_artworks<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
@@ -32,15 +31,18 @@ where
     Ok(url)
 }
 
-pub fn deserialize_unix_timestamp<'de, D>(deserializer: D) -> Result<Option<DateTimeUtc>, D::Error>
+pub fn deserialize_unix_timestamp<'de, D>(
+    deserializer: D,
+) -> Result<Option<NaiveDateTime>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let unix_timestamp = <Option<u32>>::deserialize(deserializer)?;
 
     Ok(unix_timestamp.map(|unix_timestamp| {
-        let naive = chrono::NaiveDateTime::from_timestamp_opt(unix_timestamp.into(), 0).unwrap();
-        DateTimeUtc::from_utc(naive, Utc)
+        DateTime::from_timestamp(unix_timestamp.into(), 0)
+            .unwrap()
+            .naive_utc()
     }))
 }
 
