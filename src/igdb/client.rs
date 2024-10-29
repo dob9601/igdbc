@@ -76,16 +76,16 @@ impl IgdbClient {
         client_id: &str,
         client_secret: &str,
     ) -> IgdbResult<TwitchAuthResponse> {
-        Ok(client
+        client
             .post(
                 TWITCH_OAUTH2_ENDPOINT
-                    .replace("{client_id}", &client_id)
-                    .replace("{client_secret}", &client_secret),
+                    .replace("{client_id}", client_id)
+                    .replace("{client_secret}", client_secret),
             )
             .send()
             .await?
             .error_for_status()?
             .json::<TwitchAuthResponse>()
-            .await?)
+            .await
     }
 }

@@ -55,7 +55,7 @@ where
 
     let games: Vec<GameJson>;
     {
-        let mut client = IGDB_CLIENT;
+        let mut client = IGDB_CLIENT.lock().await;
         games = client.search(&apicalypse_query).await?;
     }
 

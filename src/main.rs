@@ -15,9 +15,19 @@ fn main() -> Result<(), IgdbcError> {
         .with_line_number(true)
         .init();
 
+    println!(
+        r#"
+  _____ _____ _____  ____   _____ 
+ |_   _/ ____|  __ \|  _ \ / ____|
+   | || |  __| |  | | |_) | |     
+   | || | |_ | |  | |  _ <| |     
+  _| || |__| | |__| | |_) | |____ 
+ |_____\_____|_____/|____/ \_____|"#
+    );
+
     // Don't initialize igdb client immediately so can operate without a twitch connection in some situations
     lazy_static::initialize(&CONFIG);
-    lazy_static::initialize(&igdbc::IGDB_CLIENT);
+    lazy_static::initialize(&igdbc::igdb::IGDB_CLIENT);
 
     runtime::Builder::new_multi_thread()
         .enable_all()
