@@ -1,4 +1,9 @@
-generate-entities:
+export DATABASE_URL := "sqlite://igdbc.db"
+
+regenerate-entities:
+    sea-orm-cli migrate fresh
     sea-orm-cli generate entity \
-        --database-url sqlite:///{{justfile_directory()}}/api/igdbc.db \
-        --output-dir {{justfile_directory()}}/api/src/models/_entities/
+        --output-dir {{justfile_directory()}}/src/models/_entities/
+
+generate-migration migration_name:
+    sea-orm-cli migrate generate {{migration_name}}

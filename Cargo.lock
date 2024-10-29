@@ -1371,6 +1371,7 @@ dependencies = [
  "hyper",
  "itertools 0.13.0",
  "lazy_static",
+ "migration",
  "once_cell",
  "reqwest",
  "schemars",

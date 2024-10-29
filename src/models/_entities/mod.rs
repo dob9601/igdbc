@@ -2,5 +2,4 @@
 
 pub mod prelude;
 
-pub mod games;
-pub mod queries;
+pub mod game;
