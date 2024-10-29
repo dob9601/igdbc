@@ -1,3 +1,5 @@
+mod _entities;
+
 mod game;
 pub use game::{ActiveModel as GameActive, Column as GameColumn, Entity as Game, IGDBGame};
 
