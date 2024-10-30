@@ -16,6 +16,7 @@ use crate::views::GameJson;
 use crate::{search_igdb, AppState};
 
 const MAX_GAME_QUERY_LENGTH: usize = 32;
+const MAX_RESULTS: usize = 10;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -74,18 +75,18 @@ async fn query_games(
     let query = params.query;
 
     // game name length for 2018 ranged up to around 28. Add a bit of padding by doubling
-    if query.len() > 60 {
+    if query.len() > MAX_GAME_QUERY_LENGTH {
         return Err(GameFetchError::QueryTooLong.into());
     }
 
     info!("Querying internal database for {query}");
-    let games: Vec<GameJson> = games::Entity::find_by_query(&state.db, &query)
+    let games: Vec<GameJson> = games::Entity::find_by_query(&state.db, &query, MAX_RESULTS)
         .await?
         .into_iter()
         .map(|game| game.to_json())
         .collect();
 
-    if games.len() > MAX_GAME_QUERY_LENGTH {
+    if games.len() >= MAX_RESULTS {
         return Ok(Json(games));
     }
 
@@ -100,13 +101,15 @@ async fn query_games(
         }
     }
 
-    if maybe_query.is_none() {
-        queries::Entity::create(&state.db, query.to_string()).await?;
-    }
-
     let games = search_igdb(&state.db, query.clone()).await?;
 
-    Ok(Json(games.into_iter().map(|game| game.to_json()).collect()))
+    Ok(Json(
+        games
+            .into_iter()
+            .take(MAX_RESULTS)
+            .map(|game| game.to_json())
+            .collect(),
+    ))
 }
 
 async fn get_game(

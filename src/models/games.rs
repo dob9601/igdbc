@@ -4,13 +4,14 @@ use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set, TryIntoModel};
 use tracing::trace;
 
 impl Entity {
-    pub async fn find_by_query<C>(db: &C, query: &str) -> Result<Vec<Model>, DbErr>
+    pub async fn find_by_query<C>(db: &C, query: &str, limit: usize) -> Result<Vec<Model>, DbErr>
     where
         C: ConnectionTrait,
     {
         Self::find()
+            // FIXME(Dan): Use gamename entity, serialise without special characters to make searching better.
             .filter(Column::Name.like(&format!("{query}%")))
-            .limit(10)
+            .limit(limit as u64)
             .all(db)
             .await
     }
@@ -61,6 +62,7 @@ impl Entity {
             game_modes: Set(json.game_modes.map(|game_modes| game_modes.join(","))),
             supports_online_multiplayer: Set(json.supports_online_multiplayer),
             platforms: Set(json.platforms.map(|platforms| platforms.join(","))),
+            // FIXME(Dan): Make not thumbnail
             cover_art_url: Set(json.cover),
             artwork_url: Set(json.artworks),
         };
