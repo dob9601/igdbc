@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema, PartialEq)]
 pub struct GameJson {
     /// The ID of this game, as per IGDB
-    pub id: u32,
+    pub id: i32,
 
     pub name: String,
 
@@ -21,14 +21,14 @@ pub struct GameJson {
     pub themes: Option<Vec<String>>,
 
     /// A link to this game's [IGDB](https://www.igdb.com/) page
-    pub url: String,
+    pub igdb_url: String,
 
     pub artwork_url: Option<String>,
 
     pub cover_art_url: Option<String>,
 
     /// The date at which this game was first released
-    pub first_release_date: Option<NaiveDateTime>,
+    pub first_release_date: Option<DateTime<Utc>>,
 
     /// The name of the franchise that this game belongs to
     pub franchise: Option<String>,

@@ -7,40 +7,23 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i32,
-    pub query_id: Option<String>,
     pub name: String,
-    #[sea_orm(column_type = "Text", nullable)]
     pub summary: Option<String>,
     #[sea_orm(column_type = "Float", nullable)]
     pub aggregated_rating: Option<f32>,
-    pub themes: Option<Json>,
-    pub url: String,
-    pub first_release_date: Option<DateTime>,
+    pub themes: Option<String>,
+    pub igdb_url: String,
+    pub first_release_date: Option<DateTimeUtc>,
     pub franchise: Option<String>,
-    pub genres: Option<Json>,
-    pub game_modes: Option<Json>,
+    pub genres: Option<String>,
+    pub game_modes: Option<String>,
     pub supports_online_multiplayer: Option<bool>,
-    pub platforms: Option<Json>,
+    pub platforms: Option<String>,
     pub cover_art_url: Option<String>,
     pub artwork_url: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::queries::Entity",
-        from = "Column::QueryId",
-        to = "super::queries::Column::Query",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Queries,
-}
-
-impl Related<super::queries::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Queries.def()
-    }
-}
+pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}

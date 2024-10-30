@@ -2,20 +2,20 @@ use axum::extract::{Path, Query, State};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use chrono::{Duration, Utc};
 use reqwest::StatusCode;
 use sea_orm::EntityTrait;
 use serde::Deserialize;
 use serde_json::json;
 use thiserror::Error;
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::error::IgdbcError;
-use crate::igdb::apicalypse::ApicalypseQuery;
-use crate::igdb::IGDB_CLIENT;
-use crate::models::{self, Game, QueryActive};
+use crate::models::_entities::games;
+use crate::models::_entities::queries::{self};
 use crate::views::GameJson;
 use crate::{search_igdb, AppState};
+
+const MAX_GAME_QUERY_LENGTH: usize = 32;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -33,7 +33,7 @@ pub enum GameFetchError {
     QueryTooLong = 1,
 
     #[error("Could not find a game with ID '{0}'")]
-    IdNotFound(u32) = 2,
+    IdNotFound(i32) = 2,
 }
 
 impl GameFetchError {
@@ -79,61 +79,44 @@ async fn query_games(
     }
 
     info!("Querying internal database for {query}");
-    let games: Vec<GameJson> = Game::find_by_query(&state.db, &query)
+    let games: Vec<GameJson> = games::Entity::find_by_query(&state.db, &query)
         .await?
         .into_iter()
         .map(|game| game.to_json())
         .collect();
 
-    if games.len() < 10 {
-        let mut should_requery = true;
-        warn!("Query \"{query}\" returned a low number of results! Attempting to scrape IGDB for more matches");
-        if let Some(query_model) = models::Query::find_by_id(query.to_string())
-            .one(&state.db)
-            .await?
-        {
-            if Utc::now() - query_model.queried_at < Duration::weeks(4) {
-                info!("Query is known to return a low number of results recently (or is in the queue to be queried). Not requerying.");
-                should_requery = false;
-            } else {
-                info!("Query has been attempted before, but not in the last 4 weeks. Retrying");
-            }
-        } else {
-            info!("Query has not been attempted before, proceeding");
-        }
+    if games.len() > MAX_GAME_QUERY_LENGTH {
+        return Ok(Json(games));
+    }
 
-        if should_requery {
-            let cloned_query = query.to_string();
-            if models::Query::find_by_id(query.to_string())
-                .one(&state.db)
-                .await?
-                .is_none()
-            {
-                QueryActive::create(&state.db, query.to_string()).await?;
-            }
+    let maybe_query = queries::Entity::find_by_id(query.to_string())
+        .one(&state.db)
+        .await?;
 
-            search_igdb(&state.db, &cloned_query).await?;
-
-            return Ok(Json(
-                Game::find_by_query(&state.db, &query)
-                    .await?
-                    .into_iter()
-                    .map(|game| game.to_json())
-                    .collect(),
-            ));
+    if let Some(ref query_model) = maybe_query {
+        if query_model.queried_recently() {
+            info!("Not requerying - already queried recently.");
+            return Ok(Json(games));
         }
     }
-    Ok(Json(games))
+
+    if maybe_query.is_none() {
+        queries::Entity::create(&state.db, query.to_string()).await?;
+    }
+
+    let games = search_igdb(&state.db, query.clone()).await?;
+
+    Ok(Json(games.into_iter().map(|game| game.to_json()).collect()))
 }
 
 async fn get_game(
     State(state): State<AppState>,
-    Path(id): Path<u32>,
+    Path(id): Path<i32>,
 ) -> Result<Json<GameJson>, IgdbcError> {
-    let game = Game::find_by_id(id)
+    let game = games::Entity::find_by_id(id)
         .one(&state.db)
         .await?
-        .ok_or_else(|| GameFetchError::IdNotFound(id))?;
+        .ok_or(GameFetchError::IdNotFound(id))?;
 
     Ok(Json(game.to_json()))
 }

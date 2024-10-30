@@ -1,9 +1,8 @@
 use chrono::{Duration, NaiveDateTime, TimeDelta, Utc};
 use reqwest::Client;
-use serde::de::DeserializeOwned;
 use tokio::time::sleep;
 
-use super::{apicalypse::ApicalypseQuery, models::TwitchAuthResponse};
+use super::{apicalypse::ApicalypseQuery, models::TwitchAuthResponse, IgdbGame};
 
 const TWITCH_OAUTH2_ENDPOINT: &str = "https://id.twitch.tv/oauth2/token?client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials";
 const IGDB_GAMES_URL: &str = "https://api.igdb.com/v4/games";
@@ -36,7 +35,27 @@ impl IgdbClient {
         })
     }
 
-    pub async fn search<T: DeserializeOwned>(&mut self, query: &ApicalypseQuery) -> IgdbResult<T> {
+    pub async fn search(&mut self, query: String) -> IgdbResult<Vec<IgdbGame>> {
+        let apicalypse_query = ApicalypseQuery::builder()
+            .search(query)
+            .fields(vec![
+                "id",
+                "name",
+                "url",
+                "summary",
+                "cover.url",
+                "artworks.url",
+                "multiplayer_modes.onlinecoop",
+                "first_release_date",
+            ])
+            // Only main-games (exclude DLCs etc.)
+            .r#where("category = 0")
+            // As above, in case of upstream incorrect metadata
+            .and_where("parent_game = null")
+            // Exclude versions of games
+            .and_where("version_parent = null")
+            .limit(500);
+
         if self.token_expiry < Utc::now().naive_utc() {
             let auth_response =
                 Self::refresh_access_token(&self.client, &self.client_id, &self.client_secret)
@@ -57,13 +76,13 @@ impl IgdbClient {
         let response = self
             .client
             .post(IGDB_GAMES_URL)
-            .body(query.to_string())
+            .body(apicalypse_query.to_string())
             .header("Client-ID", &self.client_id)
             .bearer_auth(&self.access_token)
             .send()
             .await?
             .error_for_status()?
-            .json::<T>()
+            .json::<Vec<IgdbGame>>()
             .await?;
 
         self.next_request += TimeDelta::milliseconds(REQUEST_DELAY_MS);

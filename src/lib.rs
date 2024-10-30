@@ -1,14 +1,12 @@
 use futures::future::try_join_all;
 use lazy_static::lazy_static;
-use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait};
+use models::_entities::{games, queries};
+use sea_orm::{ConnectionTrait, DatabaseConnection};
 use tracing::info;
 
 use crate::configuration::{get_config, Config};
 use crate::error::IgdbcError;
-use crate::igdb::apicalypse::ApicalypseQuery;
 use crate::igdb::IGDB_CLIENT;
-use crate::models::GameActive;
-use crate::views::GameJson;
 
 lazy_static! {
     pub static ref CONFIG: Config = get_config().unwrap();
@@ -27,54 +25,30 @@ pub struct AppState {
     db: DatabaseConnection,
 }
 
-pub async fn search_igdb<C>(db: &C, query: &str) -> Result<(), IgdbcError>
+pub async fn search_igdb<C>(db: &C, query: String) -> Result<Vec<games::Model>, IgdbcError>
 where
     C: ConnectionTrait,
 {
     info!("Refreshing game cache for query {query}");
 
-    let apicalypse_query = ApicalypseQuery::builder()
-        .search(query)
-        .fields(vec![
-            "id",
-            "name",
-            "url",
-            "summary",
-            "cover.url",
-            "artworks.url",
-            "multiplayer_modes.onlinecoop",
-            "first_release_date",
-        ])
-        // Only main-games (exclude DLCs etc.)
-        .r#where("category = 0")
-        // As above, in case of upstream incorrect metadata
-        .and_where("parent_game = null")
-        // Exclude versions of games
-        .and_where("version_parent = null")
-        .limit(500);
-
-    let games: Vec<GameJson>;
+    let games;
     {
         let mut client = IGDB_CLIENT.lock().await;
-        games = client.search(&apicalypse_query).await?;
+        games = client.search(query.clone()).await?;
     }
 
     info!("IGDB returned {} games!", games.len());
 
     info!("Recording information about query");
 
-    let query = models::Query::find_by_id(query.to_string())
-        .one(db)
-        .await?
-        .ok_or(IgdbcError::Custom(
-            "Query doesn't exist in database".to_string(),
-        ))?;
+    queries::Entity::find_or_create(db, query).await?;
 
-    try_join_all(
+    let games = try_join_all(
         games
             .iter()
-            .map(|game| GameActive::create_or_update(db, game.clone(), &query)),
+            .map(|game| games::Entity::create_or_update(db, game.clone())),
     )
     .await?;
-    Ok(())
+
+    Ok(games)
 }

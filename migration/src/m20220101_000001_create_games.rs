@@ -9,21 +9,21 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Game::Table)
-                    .col(pk_auto(Game::Id))
-                    .col(string(Game::Name))
-                    .col(string_null(Game::Summary))
-                    .col(float_null(Game::AggregatedRating))
-                    .col(string_null(Game::Themes))
-                    .col(string(Game::IgdbcUrl))
-                    .col(string_null(Game::FirstReleaseDate))
-                    .col(string_null(Game::Franchise))
-                    .col(string_null(Game::Genres))
-                    .col(string_null(Game::GameModes))
-                    .col(string_null(Game::SupportsOnlineMultiplayer))
-                    .col(string_null(Game::Platforms))
-                    .col(string_null(Game::CoverArtUrl))
-                    .col(string_null(Game::ArtworkUrl))
+                    .table(Games::Table)
+                    .col(integer(Games::Id).primary_key())
+                    .col(string(Games::Name))
+                    .col(string_null(Games::Summary))
+                    .col(float_null(Games::AggregatedRating))
+                    .col(string_null(Games::Themes))
+                    .col(string(Games::IgdbUrl))
+                    .col(timestamp_null(Games::FirstReleaseDate))
+                    .col(string_null(Games::Franchise))
+                    .col(string_null(Games::Genres))
+                    .col(string_null(Games::GameModes))
+                    .col(boolean_null(Games::SupportsOnlineMultiplayer))
+                    .col(string_null(Games::Platforms))
+                    .col(string_null(Games::CoverArtUrl))
+                    .col(string_null(Games::ArtworkUrl))
                     .to_owned(),
             )
             .await
@@ -31,20 +31,21 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Game::Table).to_owned())
+            .drop_table(Table::drop().table(Games::Table).to_owned())
             .await
     }
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(DeriveIden)]
-enum Game {
+enum Games {
     Table,
     Id,
     Name,
     Summary,
     AggregatedRating,
     Themes,
-    IgdbcUrl,
+    IgdbUrl,
     FirstReleaseDate,
     Franchise,
     Genres,

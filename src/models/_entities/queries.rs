@@ -7,19 +7,10 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub query: String,
-    pub queried_at: DateTimeWithTimeZone,
+    pub queried_at: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::games::Entity")]
-    Games,
-}
-
-impl Related<super::games::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Games.def()
-    }
-}
+pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
