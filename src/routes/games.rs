@@ -8,11 +8,11 @@ use serde::Deserialize;
 use serde_json::json;
 use thiserror::Error;
 use tracing::info;
+use views::GameDTO;
 
 use crate::error::IgdbcError;
 use crate::models::_entities::games;
-use crate::models::_entities::queries::{self};
-use crate::views::GameJson;
+use crate::models::_entities::queries;
 use crate::{search_igdb, AppState};
 
 const MAX_GAME_QUERY_LENGTH: usize = 32;
@@ -71,7 +71,7 @@ pub struct GameQueryParams {
 async fn query_games(
     State(state): State<AppState>,
     Query(params): Query<GameQueryParams>,
-) -> Result<Json<Vec<GameJson>>, IgdbcError> {
+) -> Result<Json<Vec<GameDTO>>, IgdbcError> {
     let query = params.query;
 
     // game name length for 2018 ranged up to around 28. Add a bit of padding by doubling
@@ -80,7 +80,7 @@ async fn query_games(
     }
 
     info!("Querying internal database for {query}");
-    let games: Vec<GameJson> = games::Entity::find_by_query(&state.db, &query, MAX_RESULTS)
+    let games: Vec<GameDTO> = games::Entity::find_by_query(&state.db, &query, MAX_RESULTS)
         .await?
         .into_iter()
         .map(|game| game.to_json())
@@ -115,7 +115,7 @@ async fn query_games(
 async fn get_game(
     State(state): State<AppState>,
     Path(id): Path<i32>,
-) -> Result<Json<GameJson>, IgdbcError> {
+) -> Result<Json<GameDTO>, IgdbcError> {
     let game = games::Entity::find_by_id(id)
         .one(&state.db)
         .await?

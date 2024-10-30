@@ -1,23 +1,18 @@
-FROM rust:slim-buster as builder
+FROM rust:alpine3.20 AS builder
 
-RUN apt-get update \
-    && apt-get --no-install-recommends -y install libssl-dev pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --update-cache \
+    libressl-dev \
+    musl-dev \
+  && rm -rf /var/cache/apk/*
 
-COPY shared /build/shared
-COPY igdbc /build/igdbc
+COPY . /build/igdbc
 WORKDIR /build/igdbc
 
 RUN cargo build --release
 
-FROM debian:buster-slim
-
-RUN apt-get update \
-    && apt-get --no-install-recommends -y install openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+FROM alpine:3.20 AS prod
 
 WORKDIR /app
-COPY Rocket.toml .
 COPY --from=builder /build/igdbc/target/release/igdbc igdbc
 
 ENTRYPOINT [ "/app/igdbc", "run" ]

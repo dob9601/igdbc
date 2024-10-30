@@ -5,13 +5,13 @@ use utoipa::ToSchema;
 /// A game that has been pulled from [IGDB](https://www.igdb.com/) and restructured to better suit
 /// the needs of OmniLFG
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema, PartialEq)]
-pub struct GameJson {
+pub struct GameDTO {
     /// The ID of this game, as per IGDB
     pub id: i32,
 
     pub name: String,
 
-    /// A brief summary describing what this game is about
+    // / A brief summary describing what this game is about
     pub summary: Option<String>,
 
     /// A value from 0 to 1 representing the average rating this game has

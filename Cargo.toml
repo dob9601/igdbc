@@ -1,6 +1,6 @@
 [workspace]
 
-members = ["migration"]
+members = ["migration", "views"]
 
 [package]
 name = "igdbc"
@@ -11,6 +11,7 @@ edition = "2021"
 
 [dependencies]
 migration = { path = "migration" }
+views = { path = "views" }
 chrono = "0.4.38"
 config = "0.14.1"
 lazy_static = "1.4.0"

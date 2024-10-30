@@ -18,7 +18,6 @@ pub mod error;
 pub mod igdb;
 pub mod models;
 pub mod routes;
-pub mod views;
 
 #[derive(Clone, Debug)]
 pub struct AppState {

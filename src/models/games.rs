@@ -1,7 +1,8 @@
 use super::_entities::games::{ActiveModel, Column, Entity, Model};
-use crate::{igdb::IgdbGame, views::GameJson};
+use crate::igdb::IgdbGame;
 use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set, TryIntoModel};
 use tracing::trace;
+use views::GameDTO;
 
 impl Entity {
     pub async fn find_by_query<C>(db: &C, query: &str, limit: usize) -> Result<Vec<Model>, DbErr>
@@ -72,8 +73,8 @@ impl Entity {
 }
 
 impl Model {
-    pub fn to_json(self) -> GameJson {
-        GameJson {
+    pub fn to_json(self) -> GameDTO {
+        GameDTO {
             id: self.id,
             name: self.name,
             summary: self.summary,
