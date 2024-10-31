@@ -20,18 +20,6 @@ pub async fn app(db_url: &str) -> Result<Router, IgdbcError> {
     let router = Router::new()
         .nest("/games", games::router())
         .layer(
-            CorsLayer::new()
-                .allow_origin(
-                    CONFIG
-                        .allowed_origins
-                        .iter()
-                        .map(|value| value.parse::<HeaderValue>().unwrap())
-                        .collect::<Vec<_>>(),
-                )
-                .allow_headers([AUTHORIZATION, CONTENT_TYPE])
-                .allow_methods(cors::Any),
-        )
-        .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO))

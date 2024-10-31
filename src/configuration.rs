@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub database_url: String,
     pub address: String,
-    pub allowed_origins: Vec<String>,
     pub twitch: Twitch,
 }
 
