@@ -1,13 +1,9 @@
-use axum::{http::HeaderValue, Router};
-use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
+use axum::Router;
 use sea_orm::Database;
-use tower_http::{
-    cors::{self, CorsLayer},
-    trace::{self, TraceLayer},
-};
+use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 
-use crate::{db::init_database, error::IgdbcError, AppState, CONFIG};
+use crate::{db::init_database, error::IgdbcError, AppState};
 
 pub mod games;
 

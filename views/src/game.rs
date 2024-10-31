@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -28,7 +28,7 @@ pub struct GameDTO {
     pub cover_art_url: Option<String>,
 
     /// The date at which this game was first released
-    pub first_release_date: Option<DateTime<Utc>>,
+    pub first_release_date: Option<NaiveDateTime>,
 
     /// The name of the franchise that this game belongs to
     pub franchise: Option<String>,

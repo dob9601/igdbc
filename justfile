@@ -1,4 +1,4 @@
-export DATABASE_URL := "postgres://igdbc:igdbc@172.18.0.2/igdbc"
+export DATABASE_URL := "postgres://igdbc:password@172.18.0.4:5432/igdbc"
 
 regenerate-entities:
     sea-orm-cli migrate fresh

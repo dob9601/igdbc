@@ -9,7 +9,7 @@ impl Entity {
     pub async fn create<C: ConnectionTrait>(db: &C, query: String) -> Result<Model, DbErr> {
         let active_model = ActiveModel {
             query: Set(query),
-            queried_at: Set(Utc::now()),
+            queried_at: Set(Utc::now().naive_utc()),
         };
         let model = active_model.insert(db).await?;
         Ok(model)
@@ -26,6 +26,6 @@ impl Entity {
 
 impl Model {
     pub fn queried_recently(&self) -> bool {
-        Utc::now() - self.queried_at < Duration::weeks(RECENT_THRESHOLD_WEEKS)
+        (Utc::now().naive_utc() - self.queried_at) < Duration::weeks(RECENT_THRESHOLD_WEEKS)
     }
 }

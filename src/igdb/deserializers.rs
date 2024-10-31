@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime};
 use serde::{Deserialize, Deserializer, Serialize};
 
 pub fn deserialize_artworks<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
@@ -33,14 +33,17 @@ where
 
 pub fn deserialize_unix_timestamp<'de, D>(
     deserializer: D,
-) -> Result<Option<DateTime<Utc>>, D::Error>
+) -> Result<Option<NaiveDateTime>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let unix_timestamp = <Option<u32>>::deserialize(deserializer)?;
 
-    Ok(unix_timestamp
-        .map(|unix_timestamp| DateTime::from_timestamp(unix_timestamp.into(), 0).unwrap()))
+    Ok(unix_timestamp.map(|unix_timestamp| {
+        DateTime::from_timestamp(unix_timestamp.into(), 0)
+            .unwrap()
+            .naive_utc()
+    }))
 }
 
 pub fn deserialize_franchise<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>

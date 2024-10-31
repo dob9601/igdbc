@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 use super::deserializers::*;
@@ -23,7 +23,7 @@ pub struct IgdbGame {
     pub cover: Option<String>,
 
     #[serde(deserialize_with = "deserialize_unix_timestamp", default)]
-    pub first_release_date: Option<DateTime<Utc>>,
+    pub first_release_date: Option<NaiveDateTime>,
 
     #[serde(deserialize_with = "deserialize_franchise", default)]
     pub franchise: Option<String>,
