@@ -11,7 +11,7 @@ impl Entity {
     {
         Self::find()
             // FIXME(Dan): Use gamename entity, serialise without special characters to make searching better.
-            .filter(Column::Name.like(&format!("{query}%")))
+            .filter(Column::Name.like(format!("{query}%")))
             .limit(limit as u64)
             .all(db)
             .await
