@@ -1,5 +1,6 @@
 use super::_entities::games::{ActiveModel, Column, Entity, Model};
 use crate::igdb::IgdbGame;
+use migration::extension::postgres::PgExpr;
 use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Set, TryIntoModel};
 use tracing::trace;
 use views::GameDTO;
@@ -11,7 +12,7 @@ impl Entity {
     {
         Self::find()
             // FIXME(Dan): Use gamename entity, serialise without special characters to make searching better.
-            .filter(Column::Name.like(format!("{query}%")))
+            .filter(Expr::col(Column::Name).ilike(format!("{query}%")))
             .limit(limit as u64)
             .all(db)
             .await
