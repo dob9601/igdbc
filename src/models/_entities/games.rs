@@ -8,6 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i32,
     pub name: String,
+    pub searchable_name: String,
     pub summary: Option<String>,
     #[sea_orm(column_type = "Float", nullable)]
     pub aggregated_rating: Option<f32>,

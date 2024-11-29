@@ -12,6 +12,7 @@ impl MigrationTrait for Migration {
                     .table(Games::Table)
                     .col(integer(Games::Id).primary_key())
                     .col(string(Games::Name))
+                    .col(string(Games::SearchableName))
                     .col(string_null(Games::Summary))
                     .col(float_null(Games::AggregatedRating))
                     .col(string_null(Games::Themes))
@@ -42,6 +43,7 @@ enum Games {
     Table,
     Id,
     Name,
+    SearchableName,
     Summary,
     AggregatedRating,
     Themes,

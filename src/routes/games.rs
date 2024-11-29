@@ -11,7 +11,7 @@ use tracing::info;
 use views::GameDTO;
 
 use crate::error::IgdbcError;
-use crate::models::_entities::games;
+use crate::models::_entities::games::{self, Entity};
 use crate::models::_entities::queries;
 use crate::{search_igdb, AppState};
 
@@ -80,7 +80,7 @@ async fn query_games(
     }
 
     info!("Querying internal database for {query}");
-    let games: Vec<GameDTO> = games::Entity::find_by_query(&state.db, &query, MAX_RESULTS)
+    let games: Vec<GameDTO> = games::Entity::find_by_query(&state.db, query.clone(), MAX_RESULTS)
         .await?
         .into_iter()
         .map(|game| game.to_json())

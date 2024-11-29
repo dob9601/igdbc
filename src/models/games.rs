@@ -6,13 +6,21 @@ use tracing::trace;
 use views::GameDTO;
 
 impl Entity {
-    pub async fn find_by_query<C>(db: &C, query: &str, limit: usize) -> Result<Vec<Model>, DbErr>
+    const UNSEARCHABLE_CHARS: [char; 21] = [
+        '[', ']', '"', '\'', ':', ';', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+',
+        '=', '~', ' ',
+    ];
+
+    pub async fn find_by_query<C>(db: &C, query: String, limit: usize) -> Result<Vec<Model>, DbErr>
     where
         C: ConnectionTrait,
     {
         Self::find()
             // FIXME(Dan): Use gamename entity, serialise without special characters to make searching better.
-            .filter(Expr::col(Column::Name).ilike(format!("{query}%")))
+            .filter(
+                Expr::col(Column::SearchableName)
+                    .ilike(format!("{}%", Self::make_searchable_name(query))),
+            )
             .limit(limit as u64)
             .all(db)
             .await
@@ -53,7 +61,8 @@ impl Entity {
     {
         let model = ActiveModel {
             id: Set(json.id),
-            name: Set(json.name),
+            name: Set(json.name.clone()),
+            searchable_name: Set(Self::make_searchable_name(json.name)),
             summary: Set(json.summary),
             aggregated_rating: Set(json.aggregated_rating),
             themes: Set(json.themes.map(|themes| themes.join(","))),
@@ -70,6 +79,18 @@ impl Entity {
         };
         let model = model.insert(db).await?;
         Ok(model)
+    }
+
+    pub fn make_searchable_name(name: String) -> String {
+        name.chars()
+            .filter_map(|char| {
+                if Self::UNSEARCHABLE_CHARS.contains(&char) {
+                    None
+                } else {
+                    Some(char.to_ascii_lowercase())
+                }
+            })
+            .collect::<String>()
     }
 }
 
