@@ -43,10 +43,12 @@ impl IgdbClient {
                 "name",
                 "url",
                 "summary",
+                "aggregated_rating",
                 "cover.url",
                 "artworks.url",
                 "multiplayer_modes.onlinecoop",
                 "first_release_date",
+                "platforms.name",
             ])
             // Only main-games (exclude DLCs etc.)
             .r#where("category = 0")
@@ -82,7 +84,7 @@ impl IgdbClient {
             .send()
             .await?
             .error_for_status()?
-            .json::<Vec<IgdbGame>>()
+            .json()
             .await?;
 
         self.next_request += TimeDelta::milliseconds(REQUEST_DELAY_MS);
