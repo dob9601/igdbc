@@ -12,9 +12,7 @@ WORKDIR /app
 COPY ./Cargo.lock ./Cargo.toml ./
 COPY ./src ./src
 COPY ./views ./views
-
-COPY . /build/igdbc
-WORKDIR /build/igdbc
+COPY ./migration ./migration
 
 RUN cargo build --release
 
